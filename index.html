@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aim Trainer | Tactical Practice</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #111318;
+  color: #f5f5f5;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+header {
+  padding: 20px 10px;
+  background: #1b1e26;
+  border-bottom: 3px solid #ff4655;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+h1 span {
+  color: #ff4655;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+  padding: 15px;
+}
+
+.stat {
+  min-width: 75px;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 24px;
+  color: #ff4655;
+}
+
+button {
+  padding: 12px 24px;
+  margin: 8px;
+  border: none;
+  background: #ff4655;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #d93645;
+}
+
+#arena {
+  position: relative;
+  width: min(94%, 900px);
+  height: 440px;
+  margin: 10px auto;
+  overflow: hidden;
+  background:
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px),
+    #20242d;
+  background-size: 40px 40px;
+  border: 2px solid #414653;
+  cursor: crosshair;
+  user-select: none;
+}
+
+#target {
+  display: none;
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border: 5px solid white;
+  border-radius: 50%;
+  background: #ff4655;
+  box-shadow: 0 0 0 5px #ff465566;
+  transform: translate(-50%, -50%);
+  cursor: crosshair;
+}
+
+#target::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#message {
+  padding: 10px;
+  color: #c9cbd2;
+}
+
+footer {
+  padding: 12px;
+  color: #9296a3;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  #arena {
+    height: 55vh;
+    min-height: 300px;
+  }
+
+  .stats {
+    gap: 15px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>TACTICAL <span>AIM TRAINER</span></h1>
+  <p>Click the targets. Improve your aim.</p>
+</header>
+
+<section class="stats">
+  <div class="stat">SCORE<strong id="score">0</strong></div>
+  <div class="stat">HITS<strong id="hits">0</strong></div>
+  <div class="stat">MISSES<strong id="misses">0</strong></div>
+  <div class="stat">ACCURACY<strong id="accuracy">0%</strong></div>
+  <div class="stat">TIME<strong id="time">30</strong></div>
+</section>
+
+<button id="start">START TRAINING</button>
+
+<div id="arena">
+  <div id="target"></div>
+</div>
+
+<div id="message">Press START TRAINING when you're ready.</div>
+
+<footer>
+  Aim Trainer Prototype | Practice. Focus. Improve.
+</footer>
+
+<script>
+const arena = document.getElementById("arena");
+const target = document.getElementById("target");
+const startButton = document.getElementById("start");
+
+const scoreDisplay = document.getElementById("score");
+const hitsDisplay = document.getElementById("hits");
+const missesDisplay = document.getElementById("misses");
+const accuracyDisplay = document.getElementById("accuracy");
+const timeDisplay = document.getElementById("time");
+const message = document.getElementById("message");
+
+let score = 0;
+let hits = 0;
+let misses = 0;
+let timeLeft = 30;
+let playing = false;
+let timer = null;
+
+function updateStats() {
+  const totalShots = hits + misses;
+  const accuracy = totalShots === 0
+    ? 0
+    : Math.round((hits / totalShots) * 100);
+
+  scoreDisplay.textContent = score;
+  hitsDisplay.textContent = hits;
+  missesDisplay.textContent = misses;
+  accuracyDisplay.textContent = accuracy + "%";
+  timeDisplay.textContent = timeLeft;
+}
+
+function moveTarget() {
+  const padding = 25;
+  const maxX = arena.clientWidth - padding;
+  const maxY = arena.clientHeight - padding;
+
+  const x = padding + Math.random() * (maxX - padding);
+  const y = padding + Math.random() * (maxY - padding);
+
+  target.style.left = x + "px";
+  target.style.top = y + "px";
+  target.style.display = "block";
+}
+
+function endGame() {
+  playing = false;
+  clearInterval(timer);
+  target.style.display = "none";
+  startButton.disabled = false;
+  startButton.textContent = "PLAY AGAIN";
+
+  message.textContent =
+    "Training complete! Final score: " + score +
+    " | Accuracy: " + accuracyDisplay.textContent;
+}
+
+function startGame() {
+  clearInterval(timer);
+
+  score = 0;
+  hits = 0;
+  misses = 0;
+  timeLeft = 30;
+  playing = true;
+
+  startButton.disabled = true;
+  message.textContent = "Training in progress! Aim carefully.";
+  updateStats();
+  moveTarget();
+
+  timer = setInterval(() => {
+    timeLeft--;
+    updateStats();
+
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+startButton.addEventListener("click", startGame);
+
+target.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  if (!playing) return;
+
+  hits++;
+  score += 100;
+  updateStats();
+  moveTarget();
+});
+
+arena.addEventListener("click", (event) => {
+  if (!playing || event.target === target) return;
+
+  misses++;
+  updateStats();
+});
+
+updateStats();
+</script>
+
+</body>
+</html>
